@@ -1,0 +1,74 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Fast Run",
+            "type": "shell",
+            "command": "osascript -e 'tell application \"Terminal\"' -e 'activate' -e 'do script \"cd \\\"${workspaceFolder}/Build\\\" && ./CTMC_coupling\"' -e 'end tell'",
+            "group": "test" 
+        },
+        {
+            "label": "1. Create Build Dir",
+            "type": "shell",
+            "command": "mkdir -p \"${workspaceFolder}/Build\"",
+            "group": "build"
+        },
+        {
+            "label": "2. Compile Objects",
+            "type": "shell",
+            "command": "/opt/homebrew/opt/llvm/bin/clang++",
+            "args": [
+                "-std=c++17",
+                "-Ofast",
+                "-march=native",
+                "-fopenmp",
+                "-I/opt/homebrew/include/eigen3",
+                "-I/opt/homebrew/opt/libomp/include",
+                "-c",
+                "${fileDirname}/CRN.cpp",
+                "${fileDirname}/Poisson.cpp",
+                "${fileDirname}/Reflection_coupling.cpp",
+                "${fileDirname}/Dictionary.cpp",
+                "${fileDirname}/CTMC_coupling.cpp"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/Build"
+            },
+            "dependsOn": "1. Create Build Dir",
+            "group": "build"
+        },
+        {
+            "label": "3. Link Binary",
+            "type": "shell",
+            "command": "/opt/homebrew/opt/llvm/bin/clang++",
+            "args": [
+                "*.o",
+                "-L/opt/homebrew/opt/libomp/lib",
+                "-lomp", 
+                "-o",
+                "CTMC_coupling"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/Build"
+            },
+            "dependsOn": "2. Compile Objects",
+            "group": "build"
+        },
+        {
+            "label": "build & run cpp (clang++)",
+            "type": "shell",
+            // 关键点：增加了 'activate' 并且将 do script 分开执行，确保窗口跳到最前面
+            "command": "osascript -e 'tell application \"Terminal\"' -e 'activate' -e 'do script \"cd \\\"${workspaceFolder}/Build\\\" && ./CTMC_coupling\"' -e 'end tell'",
+            "dependsOn": "3. Link Binary",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "silent", 
+                "panel": "shared",
+                "focus": false
+            }
+        }
+    ]
+}

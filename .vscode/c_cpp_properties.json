@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "mac-clang-arm64",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/homebrew/include/eigen3",
+                "/opt/homebrew/opt/libomp/include"
+            ],
+            "compilerPath": "/opt/homebrew/opt/llvm/bin/clang++",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "macos-clang-arm64",
+            "compilerArgs": [
+                "-fopenmp"
+            ]
+        }
+    ],
+    "version": 4
+}

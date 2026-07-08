@@ -1,0 +1,16 @@
+{
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "/opt/homebrew/include/eigen3",
+        "/opt/homebrew/opt/libomp/include"
+    ],
+    "C_Cpp.default.compilerPath": "/opt/homebrew/opt/llvm/bin/clang++",
+    "C_Cpp.intelliSenseEngine": "Default",
+    "files.associations": {
+        "*.cpp": "cpp",
+        "*.h": "cpp",
+        "iostream": "cpp",
+        "vector": "cpp",
+        "Eigen": "cpp"
+    }
+}
