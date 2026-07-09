@@ -27,6 +27,9 @@ add_executable(coupling ${SOURCES})
 
 target_link_libraries(coupling PRIVATE Eigen3::Eigen OpenMP::OpenMP_CXX)
 
+# config - Build 
+file(COPY "${CMAKE_SOURCE_DIR}/config" DESTINATION "${CMAKE_BINARY_DIR}")
+
 if(NOT MSVC)
     target_compile_options(coupling PRIVATE -O3 -march=native -Wall)
 endif()

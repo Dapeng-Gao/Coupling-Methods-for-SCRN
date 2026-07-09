@@ -5,7 +5,7 @@
             "name": "Run CMake coupling",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/Build/coupling",
+            "program": "${workspaceFolder}/build/coupling",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
