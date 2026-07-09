@@ -40,7 +40,7 @@
 
 using namespace std;
 using namespace Eigen;
-namespace fs = std::filesystem;
+namespace fs = filesystem;
 
 // Poisson coupling
 int main()
