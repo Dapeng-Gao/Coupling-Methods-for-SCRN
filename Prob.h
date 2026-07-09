@@ -6,6 +6,7 @@
 #include <cmath>
 #include <math.h>
 #include <Eigen/Dense>
+// #include "CRN.h"
 
 using namespace Eigen;
 
@@ -33,6 +34,18 @@ public:
         VectorXd tmp = X - mu;
         return exp(-0.5 * tmp.transpose() * A.inverse() * tmp) / (2.0 * M_PI * sqrt(A.determinant()));
     }
+    // static double normpdf(const VectorXd &X,
+    //                   const VectorXd &mu,
+    //                   const MatrixXd &A)
+    // {
+    //     int d = X.size();
+    //     VectorXd diff = X - mu;
+    //     VectorXd sol = A.ldlt().solve(diff);
+    //     double quad = diff.dot(sol);
+    //     double det = A.determinant();
+    //     double norm = 1.0 / (pow(2.0 * M_PI, d / 2.0) * sqrt(det));
+    //     return norm * exp(-0.5 * quad);
+    // }
 
     // Compute G_j
     static double G_dist(int x, double t, double delta) {

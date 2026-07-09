@@ -48,7 +48,7 @@ double ReflectionCoupling::simulate(const VectorXd& X1_start, const VectorXd& X2
     VectorXd X1 = X1_start;
     VectorXd X2 = X2_start;
     int count = 0, flag = 0;
-    int count_out = 0;
+    // int count_out = 0;
     if(allPositive(X1_start) && allPositive(X2_start))
     {
 
@@ -79,7 +79,7 @@ double ReflectionCoupling::simulate(const VectorXd& X1_start, const VectorXd& X2
             rnd2 = reflection(X1, X2, rnd1, B);
             // cout << "rnd1 = " << rnd1.transpose() << endl;
             // cout << "rnd2 = " << rnd2.transpose() << endl;
-            CRN SIR_R;
+            // CRN SIR_R;
             // Update diffusion Status
             // cout << "drift1 = " << drift(X1).transpose() << endl;
             // cout << "drift2 = " << drift(X2).transpose() << endl;
@@ -184,7 +184,7 @@ double ReflectionCoupling::simulate(const VectorXd& X1_start, const VectorXd& X2
 
             else
             {
-                count_out++;
+                // count_out++;
                 cout <<"restart ! "<< endl;
 
                 cout << "X1 = " << X1.transpose() << endl;

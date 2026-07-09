@@ -58,6 +58,8 @@ int main()
     int N_sample = 1000; // sample size
     int N_thread = 10; // number of parallel threads
 
+    // cout << "wrong" << endl;
+
     // Initialize reactions matrix and rates & d and k
     CRN::initialize("config/Reactions.txt", "config/Rates.txt", "config/Initial_values.txt");
     // CRN::initialize("SIR_reactions.txt", "SIR_rates.txt");

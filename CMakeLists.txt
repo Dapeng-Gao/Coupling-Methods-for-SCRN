@@ -23,10 +23,10 @@ set(SOURCES
     Reflection_coupling.cpp
 )
 
-add_executable(coupling_simulation ${SOURCES})
+add_executable(coupling ${SOURCES})
 
-target_link_libraries(coupling_simulation PRIVATE Eigen3::Eigen OpenMP::OpenMP_CXX)
+target_link_libraries(coupling PRIVATE Eigen3::Eigen OpenMP::OpenMP_CXX)
 
 if(NOT MSVC)
-    target_compile_options(coupling_simulation PRIVATE -O3 -march=native -Wall)
+    target_compile_options(coupling PRIVATE -O3 -march=native -Wall)
 endif()
