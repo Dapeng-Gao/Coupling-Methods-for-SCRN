@@ -48,60 +48,64 @@ public:
     // }
 
     // Compute G_j
-    static double G_dist(int x, double t, double delta) {
-        double N1 = 0;
-        double a = 0;
-        for (double i = 0; i < 10000 ; i = i + 1) {
-            a = poissonCDF(i, pow(2, x) * delta); 
-            if (a > t && i > 0) {
-                N1 = i - 1;
-                break;
+    static double G_dist(int level, double t, double delta) {
+        double lambda = static_cast<double>(1 << level) * delta;
+        double F = std::exp(-lambda); 
+
+        if (F > t) {
+            return 0.0;
+        }
+
+        for (int i = 2; i < 10000; ++i) {
+            F += std::exp((i - 1) * std::log(lambda) - lambda - std::lgammaf(static_cast<float>(i)));
+            
+            if (F > t) {
+                return static_cast<double>(i - 1);
             }
         }
-        return N1;
+        return 9999.0;
     }
 
     // Probability
-    static double prob(double k, double lambda)
-    {
-        double result = 0;
-        result = exp(k*log(lambda) - lambda - lgammaf(k+1));
-        return result;
-    }   
+    static double prob(double k, double lambda) {
+        return std::exp(k * std::log(lambda) - lambda - std::lgammaf(static_cast<float>(k + 1.0)));
+    }  
 
     // Conditional Probability
     static double cond_prob(double t, double j, double lambda) {
-        double result = 0;
-        if (t < -j) {
-            result = 0;
-        } else if (t > j) {
-            result = 1;
-        } else {
-            for (int i = -j; i < t; i = i + 2) {
-                result += (prob((j - i) / 2, lambda) * prob((j + i) / 2, lambda)) / prob(j, 2 * lambda);
-            }
+        if (t < -j) return 0.0;
+        if (t > j)  return 1.0;
+
+        double denom = prob(j, 2.0 * lambda);
+        double result = 0.0;
+        
+        int i_start = -static_cast<int>(j);
+        for (int i = i_start; i < t; i += 2) {
+            result += (prob((j - i) / 2.0, lambda) * prob((j + i) / 2.0, lambda)) / denom;
         }
         return result;
     }
 
     // Conditional Distribution
-    static double cond_dist(int q, double t, double y, double delta) {
-        double N1 = 0;
-        double temp = sqrt(delta) * y + pow(2, q) * delta;
-        if (temp <= 0) {
-            N1 = 0;
-        } else {
-            for (int i = -temp; i <= temp; i = i + 1) {
-                double a = cond_prob(i, temp, pow(2, (q - 1)) * delta);
-                N1 = i;
-                if (a > t) {
-                    N1 = (i - 1) / sqrt(delta);
-                    return N1;
-                    break;
-                }
+static double cond_dist(int q, double t, double y, double delta) {
+        double sqrt_delta = std::sqrt(delta);
+        double temp = sqrt_delta * y + static_cast<double>(1 << q) * delta;
+
+        if (temp <= 0.0) return 0.0;
+
+        double lambda = static_cast<double>(1 << (q - 1)) * delta;
+        int i_start = static_cast<int>(-temp);
+        int i_end   = static_cast<int>(temp);
+
+        double N1 = 0.0;
+        for (int i = i_start; i <= i_end; ++i) {
+            double a = cond_prob(static_cast<double>(i), temp, lambda);
+            N1 = i;
+            if (a > t) {
+                return (i - 1) / sqrt_delta;
             }
         }
-        return N1;
+        return N1; 
     }
 
 private:

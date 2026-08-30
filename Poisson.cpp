@@ -18,105 +18,67 @@
 // KMT algorthm for matching poisson and brownian motion trajectory
 void Poisson::KMT(vector<double> &W, vector<double> &P, int Np, mt19937 &mt, normal_distribution<double> &norm)
 {
+    double sq_delta = sqrt(delta);
+    int w_size = W.size();
 
-//compute T and W_bar
-    vector<double> T(Np + 1);
-    vector<double> W_bar(W.size());
-
-    for (int i = 1; i < W.size(); ++i)
-    {
-        W_bar[i] = (W[i] - W[i - 1])/sqrt(delta);
-    }
-
+    VectorXd T(Np + 1);
     double partial_sum = 0;
+
     for (int i = 1; i <= Np; ++i)
     { 
-        if(i < W.size())
-        {
-            partial_sum += W_bar[i];
-        }
+        if(i < w_size)
+            partial_sum += (W[i] - W[i - 1]) / sq_delta;
         else
-        {
             partial_sum += norm(mt);
-        }
         T[i] = partial_sum;           
     }
 
-        
     int q = round(log(Np)/log(2)) - 1;
-    // cout<<"stop pt 0"<<endl;
-    // cout<<"q = "<<q<<endl;
-    vector<vector<double>> U(q + 2, vector<double>());
-    for (int i = 0; i < q + 2; ++i)
-    {
-        U[i].resize(Np/pow(2, i));
+    
+    vector<double> p2(q + 3);
+    vector<double> inv_sq2_p(q + 3);
+    for (int i = 0; i < q + 3; ++i) {
+        p2[i] = pow(2, i);
+        inv_sq2_p[i] = pow(sqrt(2), -i);
     }
 
-    // compute first column of U
-    for (int i = 0; i < q + 1; ++i)
-    {
-        double phi = Prob::normalCDF(pow(sqrt(2), -i) * (T[pow(2, i+1)] - T[pow(2, i)]));
-        // cout<<"phi = "<<phi<<endl;
-        U[i][1] = (Prob::G_dist(i, phi, delta) - pow(2, i) * delta)/sqrt(delta);
+    vector<VectorXd> U(q + 2);
+    for (int i = 0; i < q + 2; ++i) {
+        U[i] = VectorXd::Zero(Np / p2[i]); 
+    }
+
+    for (int i = 0; i < q + 1; ++i) {
+        double phi = Prob::normalCDF(inv_sq2_p[i] * (T[p2[i+1]] - T[p2[i]]));
+        U[i][1] = (Prob::G_dist(i, phi, delta) - p2[i] * delta) / sq_delta;
     }
         
-    // cout<<"stop pt 1"<<endl;
-    // Algorithm 1
-    vector<vector<double>> v_tuta(q+1, vector<double>());
-    v_tuta[0].resize(0);
-    for (int i = 1; i <= q; ++i)
-    {
-        v_tuta[i].resize(Np/pow(2, i));
+    vector<VectorXd> v_tuta(q + 1);
+    for (int i = 1; i <= q; ++i) {
+        v_tuta[i] = VectorXd::Zero(Np / p2[i]); 
     }
 
-    for (int i = 0; i<= q; ++i)//N log(N)
-    {
-        for (int j = 0; j < v_tuta[i].size(); ++j)
-        {
-            v_tuta[i][j] = 0;
-        }
-    }
-    for (int i = 1; i <= q; ++i)//N log(N)
-    {
-        int k = Np/pow(2, i) - 1;
-        for (int j = 1; j <= k; ++j)
-        {
-            int pos1 = (2 * j + 1) * pow(2, i-1);
-            int pos2 = (2 * j) * pow(2, i-1);
-            int pos3 = (2 * j + 2) * pow(2, i-1);
-            if (j <= (Np/ pow(2, i) - 1))
-            {
-                v_tuta[i][j] = 2 * T[pos1] - T[pos2] - T[pos3];
-            }
-            else
-            {
-                v_tuta[i][j] = 0;
-            }
+    for (int i = 1; i <= q; ++i) {
+        int k = Np / p2[i] - 1;
+        int half_step = p2[i - 1]; 
+        for (int j = 1; j <= k; ++j) {
+            int pos1 = (2 * j + 1) * half_step;
+            int pos2 = (2 * j) * half_step;
+            int pos3 = (2 * j + 2) * half_step;
+            v_tuta[i][j] = 2 * T[pos1] - T[pos2] - T[pos3];
         }
     }
         
-    // cout<<"stop pt 2"<<endl;
-    // Algorithm 2
-    double phi = Prob::normalCDF(T[1]);
-    double N1_bar = (Prob::G_dist(0, phi, delta) - pow(2, 0) * delta)/sqrt(delta);
-    // cout<<"stop pt 3"<<endl;
-    // Algorithm 3
-        
-    vector<vector<double>> U_tuta(q + 1, vector<double>());
-    U_tuta[0].resize(0);
-    for (int i = 1; i < q + 1; ++i)
-    {
-        U_tuta[i].resize(Np/pow(2, i));
-    }
-    // cout<<"stop pt 4"<<endl;
+    double phi_init = Prob::normalCDF(T[1]);
+    double N1_bar = (Prob::G_dist(0, phi_init, delta) - delta) / sq_delta; 
 
-// compute first column of u_tuta
-    double temp = 0;
-    for (int i = 1; i <= q; ++i)
-    {
-        double phi = Prob::normalCDF(pow(sqrt(2), -i) * v_tuta[i][1]);
+    vector<VectorXd> U_tuta(q + 1);
+    for (int i = 1; i <= q; ++i) {
+        U_tuta[i] = VectorXd::Zero(Np / p2[i]);
+    }
+
+    for (int i = 1; i <= q; ++i) {
+        double phi = Prob::normalCDF(inv_sq2_p[i] * v_tuta[i][1]);
         U_tuta[i][1] = Prob::cond_dist(i, phi, U[i][1], delta);
-        temp = sqrt(delta) * U[i][1] + pow(2, i) * delta;
     }
 
     int c1 = 1;
@@ -126,46 +88,40 @@ void Poisson::KMT(vector<double> &W, vector<double> &P, int Np, mt19937 &mt, nor
     {
         for (int v = 1; v <= c2; ++v)
         {
-            for (int j = 1; j <= q + 1 - u; ++j)
+            int d2 = 2 * c1;
+            int d3 = 2 * c1 + 1;
+            int loop_end = q + 1 - u;
+
+            for (int j = 1; j <= loop_end; ++j)
             {   
-                    
                 int d1 = j - 1;
-                int d2 = 2 * c1;
-                int d3 = 2 * c1 + 1;
-                U[d1][d2] = (U[j][c1] + U_tuta[j][c1])/2;
-                U[d1][d3] = (U[j][c1] - U_tuta[j][c1])/2;
+                U[d1][d2] = (U[j][c1] + U_tuta[j][c1]) * 0.5;
+                U[d1][d3] = (U[j][c1] - U_tuta[j][c1]) * 0.5;
             }
 
-            for (int p = 2; p <= q + 1 - u; ++p)
+            for (int p = 2; p <= loop_end; ++p)
             {
                 int d1 = p - 1;
-                int d2 = 2 * c1;
-                int d3 = 2 * c1 + 1;
-                double phi_1 = Prob::normalCDF(pow(sqrt(2), -d1) * v_tuta[d1][d2]);
-                double phi_2 = Prob::normalCDF(pow(sqrt(2), -d1) * v_tuta[d1][d3]);
+                double phi_1 = Prob::normalCDF(inv_sq2_p[d1] * v_tuta[d1][d2]);
+                double phi_2 = Prob::normalCDF(inv_sq2_p[d1] * v_tuta[d1][d3]);
                 U_tuta[d1][d2] = Prob::cond_dist(d1, phi_1, U[d1][d2], delta);
                 U_tuta[d1][d3] = Prob::cond_dist(d1, phi_2, U[d1][d3], delta);
             }
             c1 += 1;
         }
-        c2 = 2 * c2;
+        c2 <<= 1; 
     }
 
-    // cout<<"stop pt 5"<<endl;
-    // compute N(k) and P(k)
-    vector<double> NN(Np);
-    NN[0] = N1_bar * sqrt(delta) + delta;
+    double current_NN = N1_bar * sq_delta + delta;
+    P[0] = std::ceil(current_NN);
 
     for (int i = 1; i < Np; ++i)
     {
-        NN[i] = NN[i - 1] + U[0][i] * sqrt(delta) + delta; 
+        current_NN += U[0][i] * sq_delta + delta; 
+        P[i] = std::ceil(current_NN);
     }
-    for (int i = 0; i < Np; ++i)
-    {
-        P[i] = ceil(NN[i]);         
-    }
-    P.resize(W.size());
-    // cout<<"stop pt 6"<<endl;
+    
+    P.resize(w_size);
 }
 
 // CTMC for the SCRN
